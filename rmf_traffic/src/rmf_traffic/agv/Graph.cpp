@@ -1110,7 +1110,7 @@ public:
   std::string name;
   Eigen::Vector2d location;
   std::string group_name;
-  int priority;
+  std::size_t priority;
 
   template<typename... Args>
   static InternalVertex make(Args&& ... args)
@@ -1156,14 +1156,14 @@ const std::string& Graph::ZoneProperties::InternalVertex::get_group_name() const
 }
 
 //==============================================================================
-auto Graph::ZoneProperties::InternalVertex::set_priority(int priority) -> InternalVertex&
+auto Graph::ZoneProperties::InternalVertex::set_priority(std::size_t priority) -> InternalVertex&
 {
-  _pimpl->priority = std::move(priority);
+  _pimpl->priority = priority;
   return *this;
 }
 
 //==============================================================================
-const int& Graph::ZoneProperties::InternalVertex::get_priority() const
+std::size_t Graph::ZoneProperties::InternalVertex::get_priority() const
 {
   return _pimpl->priority;
 }
@@ -1223,7 +1223,7 @@ auto Graph::ZoneProperties::TransitionLane::set_entry_lane(bool _is_entry_lane) 
 }
 
 //==============================================================================
-const bool& Graph::ZoneProperties::TransitionLane::is_entry_lane() const
+bool Graph::ZoneProperties::TransitionLane::is_entry_lane() const
 {
   return _pimpl->is_entry_lane;
 }
@@ -1236,7 +1236,7 @@ auto Graph::ZoneProperties::TransitionLane::set_exit_lane(bool _is_exit_lane) ->
 }
 
 //==============================================================================
-const bool& Graph::ZoneProperties::TransitionLane::is_exit_lane() const
+bool Graph::ZoneProperties::TransitionLane::is_exit_lane() const
 {
   return _pimpl->is_exit_lane;
 }
@@ -1246,7 +1246,7 @@ class Graph::ZoneProperties::Implementation
 {
 public:
   std::string name;
-  std::string level;
+  std::string map;
   std::string type;
   Eigen::Vector2d location;
   double orientation;
@@ -1267,7 +1267,7 @@ public:
 };
 
 //==============================================================================
-Graph::ZoneProperties::InternalVertex& Graph::ZoneProperties::add_internal_vertex(std::string vertex_name)
+auto Graph::ZoneProperties::add_internal_vertex(std::string vertex_name) -> Graph::ZoneProperties::InternalVertex&
 {
   auto [iv_it, inserted] = _pimpl->internal_vertices.insert_or_assign(
     vertex_name, InternalVertex::Implementation::make(
@@ -1277,7 +1277,7 @@ Graph::ZoneProperties::InternalVertex& Graph::ZoneProperties::add_internal_verte
 }
 
 //==============================================================================
-Graph::ZoneProperties::InternalVertex* Graph::ZoneProperties::get_internal_vertex(const std::string& vertex_name)
+auto Graph::ZoneProperties::find_internal_vertex(const std::string& vertex_name) -> Graph::ZoneProperties::InternalVertex*
 {
   const auto it = _pimpl->internal_vertices.find(vertex_name);
   if (it == _pimpl->internal_vertices.end())
@@ -1287,7 +1287,7 @@ Graph::ZoneProperties::InternalVertex* Graph::ZoneProperties::get_internal_verte
 }
 
 //==============================================================================
-Graph::ZoneProperties::TransitionLane& Graph::ZoneProperties::add_transition_lane()
+auto Graph::ZoneProperties::add_transition_lane() -> Graph::ZoneProperties::TransitionLane&
 {
   _pimpl->transition_lanes.emplace_back(
     TransitionLane::Implementation::make());
@@ -1302,9 +1302,9 @@ const std::string& Graph::ZoneProperties::name() const
 }
 
 //==============================================================================
-const std::string& Graph::ZoneProperties::level() const
+const std::string& Graph::ZoneProperties::map() const
 {
-  return _pimpl->level;
+  return _pimpl->map;
 }
 
 //==============================================================================
@@ -1332,7 +1332,7 @@ const Eigen::Vector2d& Graph::ZoneProperties::dimensions() const
 }
 
 //==============================================================================
-std::vector<Graph::ZoneProperties::InternalVertex> Graph::ZoneProperties::internal_vertices() const
+auto Graph::ZoneProperties::internal_vertices() const -> std::vector<Graph::ZoneProperties::InternalVertex>
 {
   std::vector<Graph::ZoneProperties::InternalVertex> ivs;
   ivs.reserve(_pimpl->internal_vertices.size());
@@ -1345,7 +1345,7 @@ std::vector<Graph::ZoneProperties::InternalVertex> Graph::ZoneProperties::intern
 }
 
 //==============================================================================
-std::vector<Graph::ZoneProperties::TransitionLane> Graph::ZoneProperties::transition_lanes() const
+auto Graph::ZoneProperties::transition_lanes() const -> std::vector<Graph::ZoneProperties::TransitionLane>
 {
   return _pimpl->transition_lanes;
 }
@@ -1354,7 +1354,7 @@ std::vector<Graph::ZoneProperties::TransitionLane> Graph::ZoneProperties::transi
 //==============================================================================
 Graph::ZoneProperties::ZoneProperties(
   std::string name,
-  std::string level,
+  std::string map,
   std::string type,
   Eigen::Vector2d location,
   double orientation,
@@ -1362,7 +1362,7 @@ Graph::ZoneProperties::ZoneProperties(
 : _pimpl(rmf_utils::make_impl<Implementation>(
       Implementation {
         std::move(name),
-        std::move(level),
+        std::move(map),
         std::move(type),
         location,
         orientation,

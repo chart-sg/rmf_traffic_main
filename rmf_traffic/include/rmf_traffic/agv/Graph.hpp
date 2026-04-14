@@ -152,7 +152,7 @@ public:
     Waypoint& set_parking_spot(bool _is_parking_spot);
 
     /// Returns true if this Waypoint is a charger spot. Robots are routed to
-    /// these spots when their batteries charge levels drop below the threshold
+    /// these spots when their batteries charge maps drop below the threshold
     /// value.
     bool is_charger() const;
 
@@ -702,10 +702,10 @@ public:
       const std::string& get_group_name() const;
 
       /// Set the priority of this internal vertex.
-      InternalVertex& set_priority(int priority);
+      InternalVertex& set_priority(std::size_t priority);
 
       /// Get the priority of this internal vertex.
-      const int& get_priority() const;
+      std::size_t get_priority() const;
 
       class Implementation;
     private:
@@ -736,14 +736,14 @@ public:
 
       /// Returns true if this lane is a zone entry lane, a robot will 
       /// trigger a ZoneEntry event when it enters the lane. 
-      const bool& is_entry_lane() const;
+      bool is_entry_lane() const;
 
       /// Set this lane as a zone exit lane.
       TransitionLane& set_exit_lane(bool _is_exit_lane);
 
       /// Returns true if this lane is a zone exit lane, a robot will 
       /// trigger a ZoneExit event when it exits the lane. 
-      const bool& is_exit_lane() const;
+      bool is_exit_lane() const;
 
       class Implementation;
     private:
@@ -755,7 +755,7 @@ public:
 
     /// Get the internal vertex with the given name. If no such vertex exists, 
     /// then a nullptr will be returned.
-    InternalVertex* get_internal_vertex(const std::string& vertex_name);
+    InternalVertex* find_internal_vertex(const std::string& vertex_name);
 
     /// Adds a transition lane to connect this zone to the rest of the graph. 
     TransitionLane& add_transition_lane();
@@ -763,8 +763,8 @@ public:
     /// Get the name of the zone.
     const std::string& name() const;
 
-    /// Get the level of the zone.
-    const std::string& level() const;
+    /// Get the map of the zone.
+    const std::string& map() const;
 
     /// Get the type of the zone.
     const std::string& type() const;
@@ -789,7 +789,7 @@ public:
     /// Constructor
     ZoneProperties(
       std::string name,
-      std::string level,
+      std::string map,
       std::string type,
       Eigen::Vector2d location,
       double orientation,
