@@ -152,7 +152,7 @@ public:
     Waypoint& set_parking_spot(bool _is_parking_spot);
 
     /// Returns true if this Waypoint is a charger spot. Robots are routed to
-    /// these spots when their batteries charge maps drop below the threshold
+    /// these spots when their batteries charge levels drop below the threshold
     /// value.
     bool is_charger() const;
 
