@@ -86,7 +86,7 @@ bool Graph::LiftProperties::is_in_lift(
 }
 
 //==============================================================================
-Eigen::Isometry2d make_lift_tf_inv(Eigen::Vector2d location, double orientation)
+Eigen::Isometry2d make_tf_inv(Eigen::Vector2d location, double orientation)
 {
   Eigen::Isometry2d tf = Eigen::Isometry2d::Identity();
   tf.translate(location);
@@ -106,7 +106,7 @@ Graph::LiftProperties::LiftProperties(
         location,
         orientation,
         dimensions / 2.0,
-        make_lift_tf_inv(location, orientation)
+        make_tf_inv(location, orientation)
       }))
 {
   // Do nothing
@@ -1346,7 +1346,6 @@ auto Graph::ZoneProperties::transition_lanes() const -> std::vector<Graph::ZoneP
   return _pimpl->transition_lanes;
 }
 
-
 //==============================================================================
 Graph::ZoneProperties::ZoneProperties(
   std::string name,
@@ -1669,5 +1668,69 @@ auto Graph::find_known_zone(const std::string& name) const -> ZonePropertiesPtr
   return zone_it->second;
 }
 
-} // namespace avg
+//==============================================================================
+std::vector<std::size_t> Graph::lanes_crossing(
+  const std::string& zone_name,
+  double envelope) const
+{
+  auto zone = find_known_zone(zone_name);
+  if (zone == nullptr)
+    return {};
+
+  std::vector<std::size_t> result;
+  for (std::size_t i = 0; i < num_lanes(); ++i)
+  {
+    const auto& lane = get_lane(i);
+    const Eigen::Vector2d& p0 =
+      get_waypoint(lane.entry().waypoint_index()).get_location();
+    const Eigen::Vector2d& p1 =
+      get_waypoint(lane.exit().waypoint_index()).get_location();
+    if (segment_crosses(p0, p1, zone, envelope))
+      result.push_back(i);
+  }
+  return result;
+}
+
+//==============================================================================
+bool Graph::segment_crosses(
+  Eigen::Vector2d p0,
+  Eigen::Vector2d p1,
+  const ZonePropertiesPtr& zone,
+  double envelope) const
+{
+  // Transform world-frame points into zone-local frame so the AABB test is valid.
+  const Eigen::Isometry2d tf_inv =
+    make_tf_inv(zone->location(), zone->orientation());
+  auto local_p0 = tf_inv * p0;
+  auto local_p1 = tf_inv * p1;
+
+  const double hw = zone->dimensions().x() / 2.0 + envelope;
+  const double hl = zone->dimensions().y() / 2.0 + envelope;
+
+  auto inside = [&](const Eigen::Vector2d& p) {
+    return std::abs(p.x()) <= hw && std::abs(p.y()) <= hl;
+  };
+  if (inside(local_p0) || inside(local_p1)) return true;
+
+  // 2D signed area of triangle (a, b, c) — positive means c is left of a→b
+  auto side = [](Eigen::Vector2d a, Eigen::Vector2d b, Eigen::Vector2d c) {
+    return (b.x()-a.x())*(c.y()-a.y()) - (b.y()-a.y())*(c.x()-a.x());
+  };
+  // Two segments AB and CD cross when each straddles the other's line
+  auto crosses = [&](Eigen::Vector2d a, Eigen::Vector2d b,
+                     Eigen::Vector2d c, Eigen::Vector2d d) {
+    return side(a,b,c) * side(a,b,d) < 0 &&
+           side(c,d,a) * side(c,d,b) < 0;
+  };
+
+  const Eigen::Vector2d tl{-hw,  hl}, tr{ hw,  hl};
+  const Eigen::Vector2d bl{-hw, -hl}, br{ hw, -hl};
+
+  return crosses(local_p0, local_p1, tl, tr) ||   // top wall
+         crosses(local_p0, local_p1, bl, br) ||   // bottom wall
+         crosses(local_p0, local_p1, tl, bl) ||   // left wall
+         crosses(local_p0, local_p1, tr, br);     // right wall
+}
+
+} // namespace agv
 } // namespace rmf_traffic

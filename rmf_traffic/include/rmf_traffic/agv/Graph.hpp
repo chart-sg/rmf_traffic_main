@@ -878,17 +878,6 @@ public:
   /// const-qualified lane_from()
   const Lane* lane_from(std::size_t from_wp, std::size_t to_wp) const;
 
-  /// Add a known zone to the graph. If this zone has the same name as one
-  /// previously added, we will continue to use the same pointer as the original
-  /// and override the properties because zone names are expected to be unique.
-  ZonePropertiesPtr set_known_zone(ZoneProperties zone);
-
-  /// Get all the known zones.
-  std::vector<ZonePropertiesPtr> all_known_zones() const;
-
-  /// Find a known zone based on its name.
-  ZonePropertiesPtr find_known_zone(const std::string& name) const;
-
   /// Add a known lift to the graph. If this lift has the same name as one
   /// previously added, we will continue to use the same pointer as the original
   /// and override the properties because lift names are expected to be unique.
@@ -910,6 +899,33 @@ public:
 
   /// Find a known door based on its name.
   DoorPropertiesPtr find_known_door(const std::string& name) const;
+
+  /// Add a known zone to the graph. If this zone has the same name as one
+  /// previously added, we will continue to use the same pointer as the original
+  /// and override the properties because zone names are expected to be unique.
+  ZonePropertiesPtr set_known_zone(ZoneProperties zone);
+
+  /// Get all the known zones.
+  std::vector<ZonePropertiesPtr> all_known_zones() const;
+
+  /// Find a known zone based on its name.
+  ZonePropertiesPtr find_known_zone(const std::string& name) const;
+
+  /// Returns the indices of all lanes in this graph whose entry→exit segment
+  /// crosses the given zone's rectangular footprint.
+  std::vector<std::size_t> lanes_crossing(
+    const std::string& zone_name,
+    double envelope = 0.0) const;
+
+  /// Returns true if the world-frame segment p0→p1 crosses this zone's
+  /// oriented rectangular footprint. The envelope uniformly expands the
+  /// boundary used for the test. Analogous to DoorProperties::intersects()
+  /// and LiftProperties::is_in_lift().
+  bool segment_crosses(
+    Eigen::Vector2d p0,
+    Eigen::Vector2d p1,
+    const ZonePropertiesPtr& zone,
+    double envelope = 0.0) const;
 
   class Implementation;
 private:
